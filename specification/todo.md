@@ -2,11 +2,11 @@
 
 ## 1. Project Setup
 
-- [ ] Scaffold project with `npm create vite@latest` using Svelte template
-- [ ] Install and configure Tailwind CSS v4 for Svelte/Vite
-- [ ] Set up base `index.html` with dark navy background (`#1A2340`)
-- [ ] Configure Tailwind with the custom colour palette from the spec (area colours, tier colours, type colours, feedback colours, mastery map colours, action button colour)
-- [ ] Create the suggested file/folder structure (`src/stores/`, `src/lib/`, `src/components/`)
+- [x] Scaffold project with `npm create vite@latest` using Svelte template
+- [x] Install and configure Tailwind CSS v4 for Svelte/Vite
+- [x] Set up base `index.html` with dark navy background (`#1A2340`)
+- [x] Configure Tailwind with the custom colour palette from the spec (area colours, tier colours, type colours, feedback colours, mastery map colours, action button colour)
+- [x] Create the suggested file/folder structure (`src/stores/`, `src/lib/`, `src/components/`)
 
 ---
 

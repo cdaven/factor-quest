@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  /* Base colours */
+  --color-bg: #1A2340;
+  --color-panel: #232E4A;
+  --color-text-primary: #E8EAF0;
+  --color-text-secondary: #8A9BB5;
+
+  /* Area colours */
+  --color-forest-primary: #6B9E6B;
+  --color-forest-accent: #C4922A;
+  --color-caves-primary: #2E7D7D;
+  --color-caves-accent: #9B7EC8;
+  --color-fortress-primary: #9E2A2A;
+  --color-fortress-accent: #B8960C;
+
+  /* Card tier colours */
+  --color-tier-bronze: #A0522D;
+  --color-tier-silver: #A8B4C0;
+  --color-tier-gold: #D4A017;
+  --color-tier-free: #6B82A8;
+
+  /* Card type colours */
+  --color-type-attack: #C0392B;
+  --color-type-defence: #2980B9;
+  --color-type-heal: #C0607A;
+  --color-type-utility: #8E44AD;
+
+  /* UI action button colours */
+  --color-action: #4A90D9;
+  --color-action-hover: #5BA3E8;
+  --color-action-disabled: #3A4F6A;
+
+  /* UI feedback colours */
+  --color-correct: #27AE60;
+  --color-wrong: #E74C3C;
+  --color-intent-attack: #E67E22;
+  --color-intent-block: #2980B9;
+  --color-intent-buff: #8E44AD;
+  --color-intent-heal: #27AE60;
+
+  /* Mastery map colours */
+  --color-mastery-green: #4CAF50;
+  --color-mastery-amber: #F4C542;
+  --color-mastery-red: #E57373;
+  --color-mastery-unseen: #3A4560;
+}
+
+html, body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  min-height: 100vh;
+}
