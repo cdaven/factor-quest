@@ -510,7 +510,7 @@ Each enemy also introduces exactly one new mechanic or pattern, so the player is
 ```javascript
 {
   id: string,               // unique instance id
-  definitionId: string,     // references cards.js definition
+  definitionId: string,     // references cards.ts definition
   name: string,
   type: 'attack' | 'defence' | 'heal' | 'utility',
   tier: 'bronze' | 'silver' | 'gold' | 'free',
@@ -938,7 +938,7 @@ State is logged after every individual change — not once per turn. Each of the
 
 ### Implementation Notes
 
-- All logging goes through a single `logger.js` utility so it can be disabled with one flag (`const LOGGING_ENABLED = true`) for production builds
+- All logging goes through a single `logger.ts` utility so it can be disabled with one flag (`const LOGGING_ENABLED = true`) for production builds
 - State snapshots should read directly from the store rather than being manually constructed at each call site — a `logState(character)` helper keeps this consistent
 - The resolution sequence logs each step individually as it animates, not as a batch at the end, so the trace reflects the actual order of events on screen
 - Rest site healing logs both the SCENE entry (showing the before/after HP) and a STATE snapshot immediately after

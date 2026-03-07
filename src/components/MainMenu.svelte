@@ -1,0 +1,62 @@
+<script lang="ts">
+  import { masteryStore } from '../stores/masteryStore.js';
+  import { startRun } from '../stores/gameStore.js';
+
+  let { onShowMastery }: { onShowMastery: () => void } = $props();
+
+  let masteredCount = $derived(
+    Object.values($masteryStore).filter(v => v >= 3).length
+  );
+</script>
+
+<div class="min-h-screen flex flex-col items-center justify-center gap-6 px-4 py-12"
+     style="background: #1A2340;">
+
+  <!-- Wizard avatar -->
+  <div class="text-7xl leading-none select-none">🧙</div>
+
+  <!-- Title -->
+  <h1 class="text-4xl font-bold text-[#E8EAF0] tracking-tight">Factor Quest</h1>
+
+  <!-- Description -->
+  <p class="text-center text-[#8A9BB5] text-base max-w-sm leading-relaxed">
+    Play cards, answer multiplication problems, and fight your way through forest, caves
+    and fortress — all the way to the dragon!
+  </p>
+
+  <!-- Journey map emojis -->
+  <div class="flex items-center gap-4 text-3xl select-none">
+    <span title="The Forest">🌲</span>
+    <span class="text-[#3A4560] text-lg">›</span>
+    <span title="The Caves">⛏️</span>
+    <span class="text-[#3A4560] text-lg">›</span>
+    <span title="The Fortress">🏰</span>
+    <span class="text-[#3A4560] text-lg">›</span>
+    <span title="The Dragon">🐉</span>
+  </div>
+
+  <!-- Start Adventure button -->
+  <button
+    class="px-10 py-4 rounded-xl font-bold text-white text-lg shadow-lg transition-colors duration-150 mt-2"
+    style="background: #4A90D9;"
+    onmouseenter={(e) => e.currentTarget.style.background = '#5BA3E8'}
+    onmouseleave={(e) => e.currentTarget.style.background = '#4A90D9'}
+    onclick={startRun}
+  >
+    Start Adventure
+  </button>
+
+  <!-- Mastery Map button -->
+  <button
+    class="px-6 py-2 rounded-lg text-sm font-semibold transition-colors duration-150"
+    style="color: #8A9BB5; border: 1px solid #3A4560;"
+    onmouseenter={(e) => { e.currentTarget.style.color = '#E8EAF0'; e.currentTarget.style.borderColor = '#8A9BB5'; }}
+    onmouseleave={(e) => { e.currentTarget.style.color = '#8A9BB5'; e.currentTarget.style.borderColor = '#3A4560'; }}
+    onclick={onShowMastery}
+  >
+    📊 Mastery Map
+    {#if masteredCount > 0}
+      <span class="ml-1 text-[#4CAF50]">({masteredCount}/55)</span>
+    {/if}
+  </button>
+</div>

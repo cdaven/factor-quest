@@ -3,7 +3,6 @@
 A browser-based, client-side card game for children (~age 10) that teaches multiplication tables through strategic card combat. Inspired by Slay the Spire but greatly simplified. The player progresses through a dungeon by defeating enemies using a hand of cards, where each card requires correctly answering a multiplication problem to play.
 
 **Target platform:** Client-side web app (no backend required)  
-**Tech stack:** Svelte + Vite, Tailwind CSS  
 **Target age:** ~10 years old  
 **Session length:** ~20–25 minutes per run
 
@@ -12,6 +11,7 @@ A browser-based, client-side card game for children (~age 10) that teaches multi
 ## Tech Stack
 
 - **Framework:** Svelte 5 with Vite
+- **Programming language:** Typescript (target: ES2022)
 - **Styling:** Tailwind CSS
 - **State management:** Svelte stores (a single `gameStore` is sufficient)
 - **Animations:** Svelte's built-in `transition`/`animate` directives for card movement
@@ -47,12 +47,12 @@ A browser-based, client-side card game for children (~age 10) that teaches multi
 ```
 src/
   stores/
-    gameStore.js        — all game state and actions (draw, select, answer, endTurn, etc.)
-    masteryStore.js     — problem scoring, persisted to localStorage
+    gameStore.ts        — all game state and actions (draw, select, answer, endTurn, etc.)
+    masteryStore.ts     — problem scoring, persisted to localStorage
   lib/
-    cards.js            — card definitions (id, name, type, tier, effect)
-    enemies.js          — enemy definitions and action patterns
-    problems.js         — problem pool per tier, weighting logic, stamping function
+    cards.ts            — card definitions (id, name, type, tier, effect)
+    enemies.ts          — enemy definitions and action patterns
+    problems.ts         — problem pool per tier, weighting logic, stamping function
   components/
     Card.svelte         — handles both unselected and selected states
     Enemy.svelte
@@ -68,7 +68,7 @@ src/
 
 ## Notes for Implementation
 
-- Keep problem-stamping logic cleanly separated from card definitions. Cards define effects; `problems.js` assigns problems at draw time based on tier.
+- Keep problem-stamping logic cleanly separated from card definitions. Cards define effects; `problems.ts` assigns problems at draw time based on tier.
 - The mastery scores in `localStorage` persist across browser sessions — this is important for the spaced repetition to improve over many play sessions.
 - The selected card state (`selectedCardId`) should live in the store so that only one card can be in the selected/problem-revealed state at a time.
 - Start with a single enemy type and 5 cards to get the core loop working end-to-end, then expand.
