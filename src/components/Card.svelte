@@ -72,7 +72,7 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
+    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleSubmit(); }
     if (e.key === 'Escape') { e.preventDefault(); cancelCard(); }
   }
 
@@ -140,7 +140,7 @@
 
   <!-- Type + effect -->
   <div class="px-2 mt-1 flex items-start gap-1">
-    <span class="text-xs leading-tight" style="color: {typeColor}">{typeIcon}</span>
+    <span class="text-sm leading-tight" style="color: {typeColor}">{typeIcon}</span>
     <span class="text-[11px] text-[#8A9BB5] leading-tight">{cardEffect}</span>
   </div>
 
@@ -164,7 +164,7 @@
       {#if showFeedback && feedbackData}
         <!-- Wrong answer feedback -->
         <div class="text-center">
-          <div class="text-xs font-bold text-[#E74C3C]">✗ {feedbackData.submittedAnswer}</div>
+          <div class="text-sm font-bold text-[#E74C3C]">✗ {feedbackData.submittedAnswer}</div>
           <div class="text-[10px] text-[#8A9BB5]">Answer: <span class="text-[#27AE60] font-bold">{feedbackData.correctAnswer}</span></div>
           <div class="text-[10px] text-[#8A9BB5] mt-1">New problem coming…</div>
         </div>
@@ -172,7 +172,7 @@
         <!-- Free card: submit immediately -->
         <div class="text-[11px] text-[#6B82A8] text-center italic">Play for free</div>
         <button
-          class="w-full text-xs py-1 rounded font-semibold text-white"
+          class="w-full text-sm py-1 rounded font-semibold text-white"
           style="background: #4A90D9;"
           onclick={(e) => { e.stopPropagation(); submitAnswer(0); }}
         >Play</button>
@@ -200,7 +200,7 @@
           onkeydown={handleKeydown}
         />
         <button
-          class="w-full text-xs py-1 rounded font-semibold text-white"
+          class="w-full text-sm py-1 rounded font-semibold text-white"
           style="background: #4A90D9;"
           onclick={(e) => { e.stopPropagation(); handleSubmit(); }}
         >Confirm</button>

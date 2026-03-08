@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: './',
   plugins: [
     tailwindcss(),
     svelte(),
@@ -16,7 +17,7 @@ export default defineConfig({
         theme_color: '#1A2340',
         background_color: '#1A2340',
         display: 'standalone',
-        start_url: '/',
+        start_url: './',
         icons: [
           {
             src: 'icon.svg',

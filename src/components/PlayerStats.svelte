@@ -33,7 +33,7 @@
         style="width: {hpPct}%; background: {hpColor};"
       ></div>
     </div>
-    <span class="text-xs text-[#8A9BB5] w-14 text-right">{player.hp}/{player.maxHp}</span>
+    <span class="text-sm text-[#8A9BB5] w-14 text-right">{player.hp}/{player.maxHp}</span>
   </div>
 
   <!-- Shield indicator (only when shield > 0) -->

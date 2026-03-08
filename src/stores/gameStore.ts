@@ -1,5 +1,5 @@
 import { writable, get } from 'svelte/store';
-import { CARD_DEFINITIONS, STARTER_DECK_IDS, type CardInstance } from '../lib/cards.js';
+import { CARD_DEFINITIONS, STARTER_DECK_IDS, type CardInstance, type CardType } from '../lib/cards.js';
 import { ENEMY_DEFINITIONS, FIGHT_ORDER, type EnemyIntent } from '../lib/enemies.js';
 import { stampProblem, type CardTierForPool } from '../lib/problems.js';
 import { log, logState } from '../lib/logger.js';
@@ -18,6 +18,7 @@ export interface AnswerFeedback {
   attempt: number;
   submittedAnswer: number | null;
   correctAnswer: number | null;
+  cardType?: CardType;
 }
 
 export interface RunStats {
@@ -551,7 +552,7 @@ export function submitAnswer(answer: number): void {
       resolveCardEffect(s, card);
       discardCard(s, card.id);
       s.selectedCardId = null;
-      s.answerFeedback = { correct: true, attempt: 1, submittedAnswer: null, correctAnswer: null };
+      s.answerFeedback = { correct: true, attempt: 1, submittedAnswer: null, correctAnswer: null, cardType: card.type };
       s.runStats.totalCardsPlayed++;
       return s;
     }
@@ -572,7 +573,7 @@ export function submitAnswer(answer: number): void {
       resolveCardEffect(s, card);
       discardCard(s, card.id);
       s.selectedCardId = null;
-      s.answerFeedback = { correct: true, attempt, submittedAnswer: answer, correctAnswer: prob.answer };
+      s.answerFeedback = { correct: true, attempt, submittedAnswer: answer, correctAnswer: prob.answer, cardType: card.type };
       s.runStats.totalCorrectAnswers++;
       s.runStats.totalCardsPlayed++;
 
@@ -697,6 +698,10 @@ export function endTurn(): void {
         enemyActualAttackValue = dmg;
         log('ACTION', `Enemy counter-attacks: ${dmg} damage`);
         applyDamageToPlayer(s, dmg);
+        if (s.player.hp <= 0) {
+          scheduleDefeat(s.fightNumber);
+          return s;
+        }
 
       } else if (enemyIntent.type === 'heal') {
         if (s.enemy.healCap === null || s.enemy.healCount < s.enemy.healCap) {
@@ -732,7 +737,7 @@ export function endTurn(): void {
     }
 
     // ── Step 4: Counter ──────────────────────────────────────────────────────
-    if (s.player.counterActive && enemyIntent?.type === 'attack' && s.enemy.hp > 0) {
+    if (s.player.counterActive && s.player.hp > 0 && enemyIntent?.type === 'attack' && s.enemy.hp > 0) {
       const counterDmg = enemyActualAttackValue;
       log('ACTION', `Counter triggers: ${counterDmg} damage reflected (bypasses Dragon immunity)`);
       // Counter bypasses Dragon immunity — apply directly to shield then HP

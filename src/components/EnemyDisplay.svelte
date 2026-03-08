@@ -24,7 +24,7 @@
 <div class="flex flex-col items-end gap-1 w-full">
   <!-- HP bar (right-aligned, fills left-to-right) -->
   <div class="flex items-center gap-2 w-full justify-end">
-    <span class="text-xs text-[#8A9BB5] w-20 text-left">{enemy.hp}/{enemy.maxHp}</span>
+    <span class="text-sm text-[#8A9BB5] w-20 text-left">{enemy.hp}/{enemy.maxHp}</span>
     <div
       class="flex-1 h-3 bg-[#1A2340] rounded-full overflow-hidden border border-[#3A4560] relative transition-all duration-150"
       class:hit-flash={flashing}
@@ -54,7 +54,7 @@
 
   <!-- Buff aura indicator -->
   {#if enemy.buffActive}
-    <div class="text-xs font-bold" style="color: {INTENT_COLORS.buff}" transition:fade={{ duration: 200 }}>
+    <div class="text-sm font-bold" style="color: {INTENT_COLORS.buff}" transition:fade={{ duration: 200 }}>
       💥 Buffed — next attack ×2
     </div>
   {/if}

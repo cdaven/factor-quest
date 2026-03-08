@@ -49,9 +49,6 @@
       <p class="text-[#8A9BB5] text-center max-w-sm">
         You fell at Fight {$gameStore.fightNumber}. Your multiplication skills grow stronger with every run.
       </p>
-      <p class="text-[#8A9BB5] text-sm">
-        Player HP: {$gameStore.player.hp}/{$gameStore.player.maxHp}
-      </p>
       <button
         class="px-8 py-3 rounded-lg font-bold text-white text-base mt-2 transition-colors duration-150"
         style="background: #4A90D9;"

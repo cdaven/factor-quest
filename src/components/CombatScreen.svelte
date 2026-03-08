@@ -99,9 +99,28 @@
   function handleBgClick() {
     if ($gameStore.selectedCardId) cancelCard();
   }
+
+  // ── Flying card token ────────────────────────────────────────────────────────
+  // When a card is answered correctly, a token flies from the hand toward either
+  // the player's HP bar (defence/heal) or the pending-attack counter (attack).
+  // cardType is carried directly on answerFeedback to avoid timing issues.
+
+  interface FlyToken { id: number; type: string; }
+  let flyToken = $state<FlyToken | null>(null);
+  let _flyKey = 0;
+  let _lastFb: object | null = null; // plain let — ref guard so each feedback fires exactly once
+  $effect(() => {
+    const fb = $gameStore.answerFeedback;
+    if (fb?.correct && fb.cardType && fb.cardType != 'utility' && fb !== _lastFb) {
+      _lastFb = fb;
+      flyToken = { id: ++_flyKey, type: fb.cardType };
+      setTimeout(() => { flyToken = null; }, 600);
+    }
+  });
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="flex flex-col flex-1"
   style="position: relative;"
@@ -113,14 +132,15 @@
   {/if}
 
   <!-- Progress bar -->
-  <div style="border-bottom: 1px solid #232E4A;" onclick={(e) => e.stopPropagation()}>
+  <div class="mt-6" onclick={(e) => e.stopPropagation()}>
     <ProgressBar fightNumber={$gameStore.fightNumber} />
   </div>
 
   <!-- Character area -->
   <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
-    class="flex items-start gap-4 px-6 pt-4 pb-2"
+    class="flex items-start gap-4 px-6 pt-12 pb-4"
     onclick={(e) => e.stopPropagation()}
     role="region"
     aria-label="Combat area"
@@ -129,7 +149,7 @@
     <div class="flex flex-col items-center gap-2 flex-1">
       <PlayerStats player={$gameStore.player} />
       <div class="text-6xl leading-none select-none mt-2">🧙</div>
-      <div class="text-xs text-[#8A9BB5] font-semibold">You</div>
+      <div class="text-sm text-[#8A9BB5] font-semibold">You</div>
       <!-- Pending attack total -->
       {#if $gameStore.player.pendingAttackTotal > 0}
         <div class="text-sm font-bold" style="color: {INTENT_COLORS.attack}">
@@ -138,7 +158,7 @@
       {/if}
       <!-- Counter armed indicator -->
       {#if $gameStore.player.counterActive}
-        <div class="text-xs text-[#E67E22]">🔄 Counter armed</div>
+        <div class="text-sm text-[#E67E22]">🔄 Counter armed</div>
       {/if}
     </div>
 
@@ -158,7 +178,7 @@
       {#if bouncing}
         <div class="text-sm font-bold deflect-label">⚡ Immune!</div>
       {/if}
-      <div class="text-xs text-[#8A9BB5] font-semibold">{$gameStore.enemy.name}</div>
+      <div class="text-sm text-[#8A9BB5] font-semibold">{$gameStore.enemy.name}</div>
       <!-- Enemy intent -->
       {#if intentDisplay().text}
         <div class="text-sm font-bold" style="color: {intentDisplay().color}">
@@ -168,12 +188,12 @@
     </div>
   </div>
 
-  <div class="mx-6 h-px bg-[#232E4A] my-1"></div>
+  <!--<div class="mx-6 h-px bg-[#232E4A] my-5"></div>-->
 
   <!-- Card hand + hint area -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
-    class="flex flex-col items-center gap-3 px-4 pt-3 pb-2 flex-1"
+    class="flex flex-col items-center gap-3 px-4 pt-12 pb-6"
     onclick={(e) => e.stopPropagation()}
     role="region"
     aria-label="Card hand"
@@ -189,7 +209,7 @@
     <!-- Cards -->
     <div class="flex gap-3 justify-center flex-wrap">
       {#each $gameStore.player.hand as card (card.id)}
-        <div transition:fly={{ y: 40, duration: 250, opacity: 0 }}>
+        <div transition:fly={{ y: 40, duration: 250 }}>
           <Card
             {card}
             selected={!swapMode && $gameStore.selectedCardId === card.id}
@@ -206,6 +226,20 @@
         <div class="text-[#3A4560] italic text-sm py-8">No cards in hand</div>
       {/if}
     </div>
+
+    <!-- Flying card token (animates toward player on correct play) -->
+    {#if flyToken}
+      {#key flyToken.id}
+        <div
+          aria-hidden="true"
+          class="fly-token"
+          class:fly-attack={flyToken.type === 'attack'}
+          class:fly-player={flyToken.type !== 'attack'}
+        >
+          {flyToken.type === 'attack' ? '⚔️' : flyToken.type === 'defence' ? '🛡️' : flyToken.type === 'heal' ? '❤️' : '✨'}
+        </div>
+      {/key}
+    {/if}
 
     <!-- Hints -->
     <HintDisplay />
@@ -244,11 +278,12 @@
       {/if}
     </div>
 
-    <!-- Deck / Discard counts -->
+    <!-- Deck / Discard counts
     <div class="text-xs text-[#8A9BB5] flex gap-4">
       <span>Deck: {$gameStore.player.drawPile.length}</span>
       <span>Discard: {$gameStore.player.discardPile.length}</span>
     </div>
+     -->
   </div>
 </div>
 
@@ -294,4 +329,33 @@
     100% { opacity: 0; transform: translateY(-8px); }
   }
 
+  /* Flying card token */
+  .fly-token {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    font-size: 2rem;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Attack/counter → fly toward pending-attack counter (lower on player side) */
+  .fly-attack {
+    animation: fly-to-attack 0.52s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Defence/heal/utility → fly toward HP bar (higher on player side) */
+  .fly-player {
+    animation: fly-to-player 0.52s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes fly-to-attack {
+    0%   { transform: translate(-50%, 0) scale(1);                    opacity: 1; }
+    100% { transform: translate(calc(-50% - 10vw), -35vh) scale(0.2); opacity: 0; }
+  }
+
+  @keyframes fly-to-player {
+    0%   { transform: translate(-50%, 0) scale(1);                    opacity: 1; }
+    100% { transform: translate(calc(50% - 10vw), -35vh) scale(0.2); opacity: 0; }
+  }
 </style>

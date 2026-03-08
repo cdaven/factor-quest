@@ -50,14 +50,14 @@
       <div class="flex mb-1">
         <div class="w-6"></div> <!-- row header spacer -->
         {#each cols as c}
-          <div class="w-9 text-center text-[10px] text-[#8A9BB5] font-semibold">{c}</div>
+          <div class="w-9 text-center text-xs text-[#8A9BB5] font-semibold">{c}</div>
         {/each}
       </div>
 
       {#each rows as r}
         <div class="flex mb-1 items-center">
           <!-- Row header -->
-          <div class="w-6 text-[10px] text-[#8A9BB5] font-semibold text-right pr-1 shrink-0">{r}</div>
+          <div class="w-6 text-xs text-[#8A9BB5] font-semibold text-right pr-1 shrink-0">{r}</div>
 
           {#each cols as c}
             {@const key = canonicalKey(r, c)}
@@ -81,11 +81,11 @@
               onmouseleave={() => hoveredCell = null}
             >
               {#if isHovered}
-                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#232E4A] border border-[#3A4560] rounded px-2 py-1 text-[10px] whitespace-nowrap text-[#E8EAF0] z-20 pointer-events-none">
+                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#232E4A] border border-[#3A4560] rounded px-2 py-1 text-xs whitespace-nowrap text-[#E8EAF0] z-20 pointer-events-none">
                   {r} × {c} = {answer}
                 </div>
               {/if}
-              <span class="text-[10px] font-bold" style="color: {bgColor === '#3A4560' ? '#8A9BB5' : '#1A2340'}">
+              <span class="text-xs font-bold" style="color: {bgColor === '#3A4560' ? '#8A9BB5' : '#1A2340'}">
                 {answer}
               </span>
             </div>
@@ -96,7 +96,7 @@
   </div>
 
   <!-- Legend -->
-  <div class="flex justify-center gap-4 text-xs text-[#8A9BB5] pb-2">
+  <div class="flex justify-center gap-4 text-sm text-[#8A9BB5] pb-2">
     <span><span style="color: {TIER_COLORS.bronze}">▪</span> 🥉 Bronze</span>
     <span><span style="color: {TIER_COLORS.silver}">▪</span> 🥈 Silver</span>
     <span><span style="color: {TIER_COLORS.gold}">▪</span> 🥇 Gold</span>

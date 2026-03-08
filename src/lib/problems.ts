@@ -4,10 +4,11 @@
  * All 55 unique multiplication problems are represented as { a, b, answer, key }
  * where a <= b (canonical form). The key is "${a}x${b}".
  *
- * Tier pools include any problem where at least one factor belongs to the tier's table set:
- *   Bronze: ×2, ×3, ×4, ×5, ×10
- *   Silver: ×3, ×4, ×6, ×7
- *   Gold:   ×6, ×7, ×8, ×9
+ * Tier pools include any problem where at least one factor belongs to the tier's table set.
+ * ×1 and ×10 are always bronze — they are excluded from silver and gold regardless of the other factor.
+ *   Bronze: ×1, ×2, ×3, ×4, ×5, ×10
+ *   Silver: ×3, ×4, ×6, ×7  (never ×1 or ×10)
+ *   Gold:   ×6, ×7, ×8, ×9  (never ×1 or ×10)
  */
 
 export interface Problem {
@@ -21,9 +22,10 @@ export type MasteryScores = Record<string, number>;
 
 export type CardTierForPool = 'bronze' | 'silver' | 'gold';
 
-const BRONZE_FACTORS = new Set([2, 3, 4, 5, 10]);
-const SILVER_FACTORS = new Set([3, 4, 6, 7]);
-const GOLD_FACTORS   = new Set([6, 7, 8, 9]);
+const BRONZE_FACTORS  = new Set([1, 2, 3, 4, 5, 10]);
+const SILVER_FACTORS  = new Set([3, 4, 6, 7]);
+const GOLD_FACTORS    = new Set([6, 7, 8, 9]);
+const ALWAYS_BRONZE   = new Set([1, 10]); // excluded from silver/gold regardless of other factor
 
 /** All 55 unique problems (a <= b). */
 const ALL_PROBLEMS: Problem[] = [];
@@ -33,10 +35,12 @@ for (let a = 1; a <= 10; a++) {
   }
 }
 
+const notAlwaysBronze = (p: Problem) => !ALWAYS_BRONZE.has(p.a) && !ALWAYS_BRONZE.has(p.b);
+
 export const TIER_POOLS: Record<CardTierForPool, Problem[]> = {
   bronze: ALL_PROBLEMS.filter(p => BRONZE_FACTORS.has(p.a) || BRONZE_FACTORS.has(p.b)),
-  silver: ALL_PROBLEMS.filter(p => SILVER_FACTORS.has(p.a) || SILVER_FACTORS.has(p.b)),
-  gold:   ALL_PROBLEMS.filter(p => GOLD_FACTORS.has(p.a)   || GOLD_FACTORS.has(p.b)),
+  silver: ALL_PROBLEMS.filter(p => (SILVER_FACTORS.has(p.a) || SILVER_FACTORS.has(p.b)) && notAlwaysBronze(p)),
+  gold:   ALL_PROBLEMS.filter(p => (GOLD_FACTORS.has(p.a)   || GOLD_FACTORS.has(p.b))   && notAlwaysBronze(p)),
 };
 
 /**

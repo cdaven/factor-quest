@@ -16,7 +16,7 @@ export const TIER_ICONS: Record<string, string> = {
   bronze: '🥉',
   silver: '🥈',
   gold:   '🥇',
-  free:   '✨',
+  free:   ' ',
 };
 
 export const TYPE_COLORS: Record<string, string> = {
