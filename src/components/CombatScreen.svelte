@@ -49,6 +49,11 @@
   let area = $derived(areaForFight($gameStore.fightNumber));
   let areaColor = $derived(AREA_COLORS[area]);
 
+  // Pending attack display: each Attack's hits joined by "+", attacks separated by "+"
+  let pendingAttackStr = $derived(
+    $gameStore.player.queuedAttacks.flatMap(a => a.hits).join('+')
+  );
+
   // Dragon immunity bounce visual
   let lastBounced = $derived($gameStore.lastBounced);
   let bouncing = $state(false);
@@ -65,16 +70,18 @@
   // Near-death: HP <= 15
   let nearDeath = $derived($gameStore.player.hp > 0 && $gameStore.player.hp <= 15);
 
-  // Intent display (after block applied, label changes)
+  // Intent display with timing label
   let intentDisplay = $derived(() => {
     const intent = $gameStore.enemy.intent;
-    if (!intent) return { text: '', color: '#8A9BB5' };
+    if (!intent) return { text: '', color: '#8A9BB5', timing: '' };
     const { type, value } = intent;
-    if (type === 'attack') return { text: `${INTENT_ICONS.attack} Attack ${value}`, color: INTENT_COLORS.attack };
-    if (type === 'block')  return { text: `🛡️ Block ${value}`, color: INTENT_COLORS.block };
-    if (type === 'buff')   return { text: `${INTENT_ICONS.buff} Buff`, color: INTENT_COLORS.buff };
-    if (type === 'heal')   return { text: `${INTENT_ICONS.heal} Heal ${value}`, color: INTENT_COLORS.heal };
-    return { text: '', color: '#8A9BB5' };
+    // block is applied at turn start; heal also treated as already resolved per design
+    const timing = (type === 'block' || type === 'heal') ? 'Already done' : 'On end turn';
+    if (type === 'attack') return { text: `${INTENT_ICONS.attack} Attack ${value}`, color: INTENT_COLORS.attack, timing };
+    if (type === 'block')  return { text: `🛡️ Block ${value}`,                      color: INTENT_COLORS.block,  timing };
+    if (type === 'buff')   return { text: `${INTENT_ICONS.buff} Buff`,               color: INTENT_COLORS.buff,   timing };
+    if (type === 'heal')   return { text: `${INTENT_ICONS.heal} Heal ${value}`,      color: INTENT_COLORS.heal,   timing };
+    return { text: '', color: '#8A9BB5', timing: '' };
   });
 
   // Escape key handling to deselect card
@@ -150,15 +157,19 @@
       <PlayerStats player={$gameStore.player} />
       <div class="text-6xl leading-none select-none mt-2">🧙</div>
       <div class="text-sm text-[#8A9BB5] font-semibold">You</div>
-      <!-- Pending attack total -->
-      {#if $gameStore.player.pendingAttackTotal > 0}
-        <div class="text-sm font-bold" style="color: {INTENT_COLORS.attack}">
-          ⚔️ Attack {$gameStore.player.pendingAttackTotal}
+      <!-- Queued actions box -->
+      {#if $gameStore.player.pendingAttackTotal > 0 || $gameStore.player.counterActive}
+        <div class="action-box w-full" style="border-color: rgba(231,76,60,0.4);">
+          <div class="action-box-label">On end turn</div>
+          {#if $gameStore.player.queuedAttacks.length > 0}
+            <span class="text-sm font-bold" style="color: {INTENT_COLORS.attack}">
+              ⚔️ Attack {pendingAttackStr}
+            </span>
+          {/if}
+          {#if $gameStore.player.counterActive}
+            <span class="text-xs font-semibold" style="color: #E67E22;">🔄 Counter armed</span>
+          {/if}
         </div>
-      {/if}
-      <!-- Counter armed indicator -->
-      {#if $gameStore.player.counterActive}
-        <div class="text-sm text-[#E67E22]">🔄 Counter armed</div>
       {/if}
     </div>
 
@@ -179,10 +190,12 @@
         <div class="text-sm font-bold deflect-label">⚡ Immune!</div>
       {/if}
       <div class="text-sm text-[#8A9BB5] font-semibold">{$gameStore.enemy.name}</div>
-      <!-- Enemy intent -->
+      <!-- Enemy intent box -->
       {#if intentDisplay().text}
-        <div class="text-sm font-bold" style="color: {intentDisplay().color}">
-          {intentDisplay().text}
+        {@const id = intentDisplay()}
+        <div class="action-box w-full" style="border-color: {id.color}55;">
+          <div class="action-box-label">{id.timing}</div>
+          <span class="text-sm font-bold" style="color: {id.color}">{id.text}</span>
         </div>
       {/if}
     </div>
@@ -288,6 +301,26 @@
 </div>
 
 <style>
+  .action-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .action-box-label {
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6B82A8;
+    margin-bottom: 1px;
+  }
+
   .near-death-overlay {
     position: fixed;
     inset: 0;
