@@ -227,4 +227,16 @@
     75%        { transform: translateX(-3px); }
     90%        { transform: translateX(3px); }
   }
+
+  /* Chrome, Safari, Edge, Opera */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+  }
+
+  /* Firefox */
+  input[type=number] {
+      -moz-appearance: textfield;
+  }
 </style>
