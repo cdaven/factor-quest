@@ -7,7 +7,7 @@ import { masteryStore } from './masteryStore.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type Phase = 'menu' | 'prefight' | 'combat' | 'victory' | 'rest' | 'defeat';
+export type Phase = 'menu' | 'prefight' | 'combat' | 'victory' | 'rest' | 'defeat' | 'dragonSlain' | 'finalVictory';
 
 export interface Attack {
   hits: number[];
@@ -18,6 +18,13 @@ export interface AnswerFeedback {
   attempt: number;
   submittedAnswer: number | null;
   correctAnswer: number | null;
+}
+
+export interface RunStats {
+  totalCardsPlayed: number;
+  totalCorrectAnswers: number;
+  totalProblemsAttempted: number;
+  isFlawless: boolean;
 }
 
 export interface PlayerState {
@@ -63,6 +70,8 @@ export interface GameState {
   answerFeedback: AnswerFeedback | null;
   lastBounced: boolean;
   lastRestHpGained: number;
+  runStats: RunStats;
+  masterySnapshot: Record<string, number>;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -365,7 +374,7 @@ function handleVictory(s: GameState): void {
   log('SCENE', `Victory scene: Fight ${s.fightNumber} — ${s.enemy.name} defeated${hpNote}`);
   logState(s.player, 'Player');
 
-  s.phase = 'victory';
+  s.phase = s.fightNumber === 9 ? 'dragonSlain' : 'victory';
   s.selectedCardId = null;
   s.swapUsed = false;
 }
@@ -416,6 +425,8 @@ function createInitialState(): GameState {
     answerFeedback: null,
     lastBounced: false,
     lastRestHpGained: 0,
+    runStats: { totalCardsPlayed: 0, totalCorrectAnswers: 0, totalProblemsAttempted: 0, isFlawless: true },
+    masterySnapshot: {},
   };
 }
 
@@ -457,6 +468,8 @@ export function startRun(): void {
     };
 
     s.enemy = enemy;
+    s.runStats = { totalCardsPlayed: 0, totalCorrectAnswers: 0, totalProblemsAttempted: 0, isFlawless: true };
+    s.masterySnapshot = { ...masteryStore.getScores() };
 
     log('RUN', `Run started — player HP: 60/60, deck: ${deck.length} cards`);
     log('SCENE', `Pre-fight scene: Fight 1 — ${enemy.name} ${enemy.emoji}`);
@@ -539,12 +552,15 @@ export function submitAnswer(answer: number): void {
       discardCard(s, card.id);
       s.selectedCardId = null;
       s.answerFeedback = { correct: true, attempt: 1, submittedAnswer: null, correctAnswer: null };
+      s.runStats.totalCardsPlayed++;
       return s;
     }
 
     const prob = card.problem!;
     const isCorrect = answer === prob.answer;
     const attempt = card.attempts + 1; // 1 or 2
+
+    s.runStats.totalProblemsAttempted++;
 
     log('ACTION', `Answer submitted: ${answer} — ${isCorrect ? 'CORRECT' : 'WRONG'} (${attempt === 1 ? 'first' : 'second'} attempt)${!isCorrect ? ` — correct answer: ${prob.answer}` : ''}`);
 
@@ -557,6 +573,8 @@ export function submitAnswer(answer: number): void {
       discardCard(s, card.id);
       s.selectedCardId = null;
       s.answerFeedback = { correct: true, attempt, submittedAnswer: answer, correctAnswer: prob.answer };
+      s.runStats.totalCorrectAnswers++;
+      s.runStats.totalCardsPlayed++;
 
     } else if (attempt === 1) {
       // Wrong first attempt — penalise, re-stamp new problem of same tier
@@ -771,18 +789,12 @@ export function endTurn(): void {
 
 /**
  * Dismiss the victory scene overlay and move to the next phase.
- * - After fight 9: return to menu (run complete).
  * - After fight 3 or 6: show rest site overlay and apply healing.
  * - Otherwise: advance to next fight's pre-fight scene.
+ * (Fight 9 victory goes to dragonSlain, not here.)
  */
 export function dismissVictory(): void {
   update(s => {
-    if (s.fightNumber === 9) {
-      log('RUN', `Run ended — victory — all 9 fights cleared`);
-      s.phase = 'menu';
-      return s;
-    }
-
     if (s.fightNumber === 3 || s.fightNumber === 6) {
       // Rest site
       const before = s.player.hp;
@@ -813,6 +825,30 @@ export function dismissRest(): void {
     s.enemy = createEnemyState(s.fightNumber);
     s.phase = 'prefight';
     log('SCENE', `Pre-fight scene: Fight ${s.fightNumber} — ${s.enemy.name} ${s.enemy.emoji}`);
+    return s;
+  });
+}
+
+/**
+ * Advance from the Dragon Slain stage to the Final Victory (quest complete) screen.
+ */
+export function dismissDragonSlain(): void {
+  update(s => {
+    s.phase = 'finalVictory';
+    return s;
+  });
+}
+
+/**
+ * Dismiss the Final Victory screen and return to the main menu.
+ * Logs the run completion stats.
+ */
+export function dismissFinalVictory(): void {
+  update(s => {
+    const { totalCardsPlayed, totalCorrectAnswers, totalProblemsAttempted, isFlawless } = s.runStats;
+    const pct = totalProblemsAttempted > 0 ? Math.round((totalCorrectAnswers / totalProblemsAttempted) * 100) : 0;
+    log('RUN', `Run ended — victory — all 9 fights cleared — spells: ${totalCardsPlayed}, correct: ${totalCorrectAnswers}/${totalProblemsAttempted} (${pct}%), flawless: ${isFlawless ? 'yes' : 'no'}`);
+    s.phase = 'menu';
     return s;
   });
 }

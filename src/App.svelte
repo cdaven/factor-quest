@@ -4,6 +4,8 @@
   import CombatScreen from './components/CombatScreen.svelte';
   import SceneOverlay from './components/SceneOverlay.svelte';
   import MasteryMap   from './components/MasteryMap.svelte';
+  import DragonSlain  from './components/DragonSlain.svelte';
+  import FinalVictory from './components/FinalVictory.svelte';
 
   // Mastery map can be shown as a full-screen overlay at any time from the menu
   let showMastery = $state(false);
@@ -32,6 +34,12 @@
 
   {:else if phase === 'rest'}
     <SceneOverlay type="rest" />
+
+  {:else if phase === 'dragonSlain'}
+    <DragonSlain />
+
+  {:else if phase === 'finalVictory'}
+    <FinalVictory />
 
   {:else if phase === 'defeat'}
     <!-- Defeat screen -->

@@ -16,7 +16,7 @@ A browser-based, client-side card game for children (~age 10) that teaches multi
 - **Framework:** Svelte 5 with Vite
 - **Language:** TypeScript, targeting ES2022
 - **Styling:** Tailwind CSS
-- **Fonts:** Nunito from Google Fonts
+- **Fonts:** Nunito from Google Fonts — used throughout for all text including titles, body, card descriptions, scene text, and numbers/math problems. Use weight variants for hierarchy (e.g. 700/800 for headings, 400 for body, 600 for emphasis)
 - **State management:** Svelte stores (a single `gameStore` is sufficient)
 - **Animations:** Svelte's built-in `transition`/`animate` directives for card movement
 - **Installable:** The game should be a Progressive Web App (PWA) with a manifest and service worker so the user can install it to their home screen or desktop
@@ -279,7 +279,7 @@ Every event in the run is accompanied by a scene overlay. The full sequence of o
 [Pre-fight 1] → [Victory 1] → [Pre-fight 2] → [Victory 2] → [Pre-fight 3] → [Victory 3]
 → [Rest Site 1] → [Pre-fight 4] → [Victory 4] → [Pre-fight 5] → [Victory 5]
 → [Pre-fight 6] → [Victory 6] → [Rest Site 2] → [Pre-fight 7] → [Victory 7]
-→ [Pre-fight 8] → [Victory 8] → [Pre-fight 9] → [Victory 9 / Final Victory]
+→ [Pre-fight 8] → [Victory 8] → [Pre-fight 9] → [Dragon Slain] → [Final Victory Screen]
 ```
 
 The player always sees: pre-fight scene → combat → victory scene → (rest site if applicable) → pre-fight scene → combat → ...
@@ -322,7 +322,125 @@ Victory scenes reflect the area the player is in and the enemy just defeated. Th
 └─────────────────────────────────────────────────────┘
 ```
 
-The victory overlay replaces the combat screen. The ✨ +5 HP line appears after the scene text with a brief sparkle effect on the player's HP bar. The Continue button leads to the rest site overlay (if one follows) or directly to the next pre-fight scene. The Dragon victory (fight 9) omits the +5 HP line since the run is complete.
+The victory overlay replaces the combat screen. The ✨ +5 HP line appears after the scene text with a brief sparkle effect on the player's HP bar. The Continue button leads to the rest site overlay (if one follows) or directly to the next pre-fight scene. Fight 9 (the Dragon) uses its own unique Dragon Slain sequence instead of the standard victory overlay — see Final Victory Screen below.
+
+---
+
+## Final Victory Screen
+
+When the Dragon's HP reaches zero, the game skips the standard victory overlay and plays a unique multi-stage celebration sequence. This is the payoff for the entire run — it should feel special and distinctly different from every other victory.
+
+### Stage 1 — Dragon Slain
+
+The combat screen freezes briefly. The screen shakes once (a single strong tremor, not sustained wobble). Then everything goes quiet — all UI elements except the Dragon emoji fade out. The Dragon emoji dims and fades away. Light floods in from the screen edges, gradually brightening the background from the dark navy (`#1A2340`) toward a warm gold-white — this is the first and only time the dark palette breaks during the game.
+
+The wizard emoji 🧙 rises to the centre of the screen, larger than at any other point in the game (suggest 8–10rem). Below it, the title appears:
+
+*"The Dragon is Slain!"*
+
+The title uses bold Nunito (weight 800), coloured bright gold (`#D4A017`), with a subtle shimmer or pulse animation. The whole stage lingers for 3–4 seconds before a Continue button fades in.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│                                                     │
+│                      🧙                             │
+│                                                     │
+│              The Dragon is Slain!                   │
+│                                                     │
+│                                                     │
+│                  [ Continue ]                       │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+The background for this stage is lighter and warmer than anywhere else in the game — the light that "floods the chamber" in the Dragon's victory text is reflected in the UI itself.
+
+### Stage 2 — Quest Complete
+
+Pressing Continue transitions to the results screen. The background returns to the dark navy but retains a warm golden border or subtle vignette to keep the celebratory tone. The screen is divided into two halves: adventure stats at the top, mastery progress at the bottom.
+
+**Adventure stats** are revealed one at a time with gentle fade-in animations (each line appears ~0.8 seconds after the previous):
+
+*"Your quest is complete, young wizard."*
+
+- *"You cast **N spells** on your journey"* — total cards successfully played across all 9 fights
+- *"You solved **N multiplication problems** correctly"* — total correct answers (first and second attempts combined); if the success rate is 70% or above, append the percentage in parentheses, e.g. *"(92%)"*; if below 70%, omit the percentage entirely
+- *"You defeated all **9 monsters** — from Snail to Dragon"*
+
+**Flawless run line (conditional):** If the player completed the entire run without dying (i.e. this was a single continuous run from fight 1 to fight 9 with no game-over screen), add a special line after the monster count:
+
+*"A flawless quest — you defeated every monster on your first try! ✨"*
+
+This line only appears on genuinely unbroken runs. It gives the child something to aim for on replays and something to be proud of when achieved.
+
+**First victory line (conditional):** If this is the first time the player has ever defeated the Dragon (tracked in `localStorage`), add a line after the stats:
+
+*"You've proven yourself, young wizard. But the dungeon resets and the monsters return… can you do it again, even better?"*
+
+This frames the replay as a challenge rather than repetition. It only appears once — on subsequent victories it is omitted.
+
+### Stage 3 — Mastery Progress
+
+Below the adventure stats, separated by a subtle divider, the mastery progress section appears:
+
+*"Your knowledge grew!"*
+
+This shows a compact summary of problems that **improved** during this run — not the full 10×10 grid, and not problems that got worse. Each improved problem is displayed as a small tile showing the problem text (e.g. "7×8") with a colour transition arrow from its old state to its new state (e.g. a red tile → yellow tile, or yellow tile → green tile). Problems are arranged in a single horizontal row, wrapping if necessary.
+
+If no problems improved during this run, this section instead shows:
+
+*"You held steady — no problems lost ground!"*
+
+Below the improvement tiles, a cumulative progress line:
+
+*"You've mastered **31 out of 55** problems!"*
+
+This is accompanied by a simple progress bar (using mastery green `#4CAF50` on the dark background). If the mastered count increased since the start of this run, append a sparkle: *"(+4 since last run!) ✨"*
+
+### Final Buttons
+
+Two buttons at the bottom of the screen, appearing after all stats have animated in:
+
+- **"Adventure Again"** — primary action button (`#4A90D9`), starts a new run
+- **"View Mastery Map"** — secondary button (outlined or subdued), opens the full mastery map
+
+### Quest Complete Overlay UI
+
+```
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│        "Your quest is complete, young wizard."      │
+│                                                     │
+│        You cast 47 spells on your journey           │
+│        You solved 43 problems correctly (91%)       │
+│        You defeated all 9 monsters —                │
+│          from Snail to Dragon                       │
+│                                                     │
+│        A flawless quest — you defeated every        │
+│        monster on your first try! ✨                 │
+│                                                     │
+│  ─────────────────────────────────────────────────  │
+│                                                     │
+│              "Your knowledge grew!"                 │
+│                                                     │
+│     [7×8 🟥→🟨]  [6×9 🟨→🟩]  [8×4 ⬛→🟨]         │
+│                                                     │
+│     You've mastered 31 out of 55 problems!          │
+│     ████████████░░░░░░░░  (+4 since last run!) ✨   │
+│                                                     │
+│     [ Adventure Again ]    [ View Mastery Map ]     │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+### Tracking and State
+
+The final victory screen requires a few additional pieces of state:
+
+- **Run stats** (tracked in the game store, reset each run): total cards played, total correct answers, total problems attempted, whether the run was flawless (no game-over)
+- **First Dragon victory** (tracked in `localStorage`): a boolean flag, set to true after the first completed run, used to show the one-time "proven yourself" message
+- **Mastery snapshots** (tracked in the game store): a snapshot of all mastery scores taken at the start of each run, compared against the current scores at the end to compute which problems improved and by how much
 
 ---
 
@@ -490,7 +608,7 @@ Each enemy also introduces exactly one new mechanic or pattern, so the player is
 ```javascript
 {
   // Run state
-  phase: 'menu' | 'combat' | 'rest' | 'victory' | 'defeat',
+  phase: 'menu' | 'combat' | 'rest' | 'victory' | 'dragonSlain' | 'finalVictory' | 'defeat',
   fightNumber: 1,            // 1–9; area is derived from this (1–3 Forest, 4–6 Caves, 7–9 Fortress)
 
   // Player
@@ -521,6 +639,19 @@ Each enemy also introduces exactly one new mechanic or pattern, so the player is
   // Problem tracking (persists across runs via localStorage)
   masteryScores: {
     [key: string]: number    // key = "6x7", value = cumulative score
+  },
+
+  // Run stats (reset each run, used for final victory screen)
+  runStats: {
+    totalCardsPlayed: number,
+    totalCorrectAnswers: number,
+    totalProblemsAttempted: number,
+    isFlawless: boolean,     // true if no game-over occurred during this run
+  },
+
+  // Mastery snapshot (taken at run start, compared at run end to show improvement)
+  masterySnapshot: {
+    [key: string]: number    // copy of masteryScores at the start of this run
   },
 
   // Turn state
@@ -992,9 +1123,6 @@ State is logged after every individual change — not once per turn. Each of the
 [STATE]  Player  ❤️ 45/60  🛡️ 10
 [ACTION] Player attack 2 lands: 35 damage — enemy shield absorbs 5, HP takes 30 (HP: 28 → 0)
 [STATE]  Enemy  Wolf  ❤️ 0/40  🛡️ 0
-[ACTION] Cleanup — player shield reset (20 → 0), enemy shield reset (0 → 0)
-[STATE]  Player  ❤️ 45/60  🛡️ 0
-[STATE]  Enemy  Wolf  ❤️ 1/40  🛡️ 0
 ```
 
 **Problem and mastery events:**
@@ -1016,7 +1144,7 @@ State is logged after every individual change — not once per turn. Each of the
 [RUN]   Fight 3 started — enemy: Giant Spider, HP: 50
 [RUN]   Fight 3 ended — victory — player HP: 38/60
 [RUN]   Run ended — defeat at Fight 5 — player HP: 0
-[RUN]   Run ended — victory — all 9 fights cleared
+[RUN]   Run ended — victory — all 9 fights cleared — spells: 47, correct: 43/47 (91%), flawless: yes
 ```
 
 ### Implementation Notes

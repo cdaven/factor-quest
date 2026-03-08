@@ -146,7 +146,7 @@
 
   <!-- Double Down glow indicator -->
   {#if doubleDownBoosted}
-    <div class="px-2 mt-1 text-[10px] font-bold" style="color: {TIER_COLORS['gold']}">✨ ×2 ready</div>
+    <div class="px-2 mt-1 text-[10px] font-bold" style="color: {TIER_COLORS['gold']}">✨ ×2 damage</div>
   {/if}
 
   <!-- Problem area -->
