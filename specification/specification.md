@@ -1,5 +1,30 @@
 # Multiplication Quest — Game Specification
 
+## Overview
+
+A browser-based, client-side card game for children (~age 10) that teaches multiplication tables through strategic card combat. Inspired by Slay the Spire but greatly simplified. The player progresses through a dungeon by defeating enemies using a hand of cards, where each card requires correctly answering a multiplication problem to play.
+
+**Target platform:** Client-side web app (no backend required)  
+**Tech stack:** Svelte + Vite, Tailwind CSS  
+**Target age:** ~10 years old  
+**Session length:** ~20–25 minutes per run
+
+---
+
+## Tech Stack
+
+- **Framework:** Svelte 5 with Vite
+- **Language:** TypeScript, targeting ES2022
+- **Styling:** Tailwind CSS
+- **Fonts:** Nunito from Google Fonts
+- **State management:** Svelte stores (a single `gameStore` is sufficient)
+- **Animations:** Svelte's built-in `transition`/`animate` directives for card movement
+- **Installable:** The game should be a Progressive Web App (PWA) with a manifest and service worker so the user can install it to their home screen or desktop
+- **Responsive design:** The layout targets desktop computers and modern tablets. Minimum supported viewport is approximately 1900×1000 pixels. The design should scale up cleanly on larger screens but does not need to support phone-sized viewports
+- **No game engine** — this is UI state management, not a sprite-based game
+
+---
+
 ## Core Game Loop
 
 A run consists of 9 fights arranged in a single linear path — no branching, no map to navigate. The fights are grouped into three named areas, each with a distinct setting and difficulty level. There is no concept of "floors" — just fights grouped by area. Two rest sites sit between the areas, one after The Forest and one after The Caves.
@@ -510,7 +535,7 @@ Each enemy also introduces exactly one new mechanic or pattern, so the player is
 ```javascript
 {
   id: string,               // unique instance id
-  definitionId: string,     // references cards.ts definition
+  definitionId: string,     // references cards.js definition
   name: string,
   type: 'attack' | 'defence' | 'heal' | 'utility',
   tier: 'bronze' | 'silver' | 'gold' | 'free',
@@ -856,6 +881,64 @@ If the player's HP drops to 15 or below at any point, the screen edges pulse wit
 
 ---
 
+## Animations (Nice to Have, Not Blocking)
+
+- Cards slide in from the draw pile when drawn
+- Selecting a card causes it to rise/expand and reveal the problem
+- Played cards fly toward the enemy (attack) or player (defence/heal) then go to discard
+- Enemy flashes red when hit; player avatar flashes when taking damage
+- Player and enemy HP bars animate smoothly
+- Wrong answer: card shakes, correct answer shown briefly, new problem fades in
+- Second wrong answer: card dims and slides to discard pile
+- Boss immunity: attack bounces off with a spark effect, no shield animation (the Dragon has no shield — it simply negates weak attacks)
+
+---
+
+## Out of Scope (for initial version)
+
+- Multiple character classes or starting decks
+- Persistent progression between runs (unlocks, achievements)
+- Sound effects or music
+- Phone-sized viewports (desktop and tablet only)
+- Saving a run in progress
+
+---
+
+## File Structure Suggestion
+
+```
+src/
+  stores/
+    gameStore.js        — all game state and actions (draw, select, answer, endTurn, etc.)
+    masteryStore.js     — problem scoring, persisted to localStorage
+  lib/
+    cards.js            — card definitions (id, name, type, tier, effect)
+    enemies.js          — enemy definitions and action patterns
+    problems.js         — problem pool per tier, weighting logic, stamping function
+  components/
+    Card.svelte         — handles both unselected and selected states
+    Enemy.svelte
+    PlayerStats.svelte
+    CombatScreen.svelte
+    RestSite.svelte
+    MasteryMap.svelte
+    MainMenu.svelte
+  App.svelte
+```
+
+---
+
+## Notes for Implementation
+
+- Keep problem-stamping logic cleanly separated from card definitions. Cards define effects; `problems.js` assigns problems at draw time based on tier.
+- The mastery scores in `localStorage` persist across browser sessions — this is important for the spaced repetition to improve over many play sessions.
+- The selected card state (`selectedCardId`) should live in the store so that only one card can be in the selected/problem-revealed state at a time.
+- Start with a single enemy type and 5 cards to get the core loop working end-to-end, then expand.
+- Wrong-answer feedback (showing the correct answer before moving on) is pedagogically important — don't skip it.
+- Enemy HP and damage values in this spec are starting points. Playtesting with the target age group will likely require tuning, especially the bronze/silver/gold tier breakpoints.
+
+---
+
 ## Logging
 
 All player actions and all state changes are logged to the browser console. Logging is intended for development and debugging — it provides a complete, readable trace of everything that happened in a session without requiring any external tooling.
@@ -938,7 +1021,7 @@ State is logged after every individual change — not once per turn. Each of the
 
 ### Implementation Notes
 
-- All logging goes through a single `logger.ts` utility so it can be disabled with one flag (`const LOGGING_ENABLED = true`) for production builds
+- All logging goes through a single `logger.js` utility so it can be disabled with one flag (`const LOGGING_ENABLED = true`) for production builds
 - State snapshots should read directly from the store rather than being manually constructed at each call site — a `logState(character)` helper keeps this consistent
 - The resolution sequence logs each step individually as it animates, not as a batch at the end, so the trace reflects the actual order of events on screen
 - Rest site healing logs both the SCENE entry (showing the before/after HP) and a STATE snapshot immediately after

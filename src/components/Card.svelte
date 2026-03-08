@@ -153,7 +153,7 @@
   {#if !selected}
     <div class="mt-auto px-2 pb-2 pt-1">
       {#if card.tier === 'free'}
-        <div class="text-[10px] text-[#6B82A8] italic">No problem required</div>
+        <div class="text-[10px] text-[#6B82A8] italic"></div>
       {:else}
         <div class="text-center text-lg text-[#3A4560]">🔒</div>
       {/if}

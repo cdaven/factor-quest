@@ -9,8 +9,7 @@
   );
 </script>
 
-<div class="min-h-screen flex flex-col items-center justify-center gap-6 px-4 py-12"
-     style="background: #1A2340;">
+<div class="flex-1 flex flex-col items-center justify-center gap-6 px-4 py-12">
 
   <!-- Wizard avatar -->
   <div class="text-7xl leading-none select-none">🧙</div>

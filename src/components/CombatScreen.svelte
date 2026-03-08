@@ -103,8 +103,8 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div
-  class="min-h-screen flex flex-col"
-  style="background: #1A2340; position: relative;"
+  class="flex flex-col flex-1"
+  style="position: relative;"
   onclick={handleBgClick}
 >
   <!-- Near-death overlay -->
