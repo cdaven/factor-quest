@@ -73,3 +73,7 @@ src/
 ## Mastery Tracking
 
 A 10×10 grid (accessible from the main menu) shows progress across all 55 multiplication problems. Cells are coloured green / amber / red / dark based on answer history. Scores persist in `localStorage` so progress carries across sessions and runs.
+
+## Authorship
+
+This project was built as a collaboration between a human and AI. The game concept, design, specification, and code are approximately 99% the work of [Claude Code](https://claude.ai/code) (Anthropic's AI coding assistant), including the game mechanics, card system, enemy design, spaced-repetition logic, UI, and animations. The human contributor provided direction, feedback, and testing throughout.
