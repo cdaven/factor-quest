@@ -12,6 +12,7 @@ export type Phase = 'menu' | 'prefight' | 'combat' | 'victory' | 'rest' | 'defea
 
 export interface Attack {
   hits: number[];
+  multiplier?: number; // if set, each hit was (hit / multiplier) × multiplier — used for display
 }
 
 export interface AnswerFeedback {
@@ -279,24 +280,26 @@ function resolveCardEffect(s: GameState, card: CardInstance): void {
 
   switch (type) {
     case 'damage': {
-      const dmg = s.player.doubleDownActive ? value * 2 : value;
-      if (s.player.doubleDownActive) {
+      const boosted = s.player.doubleDownActive;
+      const dmg = boosted ? value * 2 : value;
+      if (boosted) {
         log('ACTION', `Double Down active — damage ${value} → ${dmg}`);
         s.player.doubleDownActive = false;
       }
-      s.player.queuedAttacks.push({ hits: [dmg] });
+      s.player.queuedAttacks.push({ hits: [dmg], ...(boosted && { multiplier: 2 }) });
       s.player.pendingAttackTotal += dmg;
       log('ACTION', `Card played: ${card.name} (${card.tier}, attack) — ${dmg} damage queued`);
       break;
     }
 
     case 'damage_twice': {
-      const dmg = s.player.doubleDownActive ? value * 2 : value;
-      if (s.player.doubleDownActive) {
+      const boosted = s.player.doubleDownActive;
+      const dmg = boosted ? value * 2 : value;
+      if (boosted) {
         log('ACTION', `Double Down active — each hit ${value} → ${dmg}`);
         s.player.doubleDownActive = false;
       }
-      s.player.queuedAttacks.push({ hits: [dmg, dmg] });
+      s.player.queuedAttacks.push({ hits: [dmg, dmg], ...(boosted && { multiplier: 2 }) });
       s.player.pendingAttackTotal += dmg * 2;
       log('ACTION', `Card played: ${card.name} (${card.tier}, attack) — ${dmg} damage × 2 queued`);
       break;

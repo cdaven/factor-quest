@@ -116,8 +116,15 @@ import { gameStore, selectCard, cancelCard, useSwap, endTurn } from '../stores/g
   let areaColor = $derived(AREA_COLORS[area]);
 
   // Pending attack display: each Attack's hits joined by "+", attacks separated by "+"
+  // If an attack was boosted (multiplier set), show base×multiplier instead of final value.
   let pendingAttackStr = $derived(
-    $gameStore.player.queuedAttacks.flatMap(a => a.hits).join('+')
+    $gameStore.player.queuedAttacks.flatMap(a => {
+      if (a.multiplier && a.multiplier > 1) {
+        const base = a.hits[0] / a.multiplier;
+        return a.hits.map((): string => `${base}×${a.multiplier}`);
+      }
+      return a.hits.map(String);
+    }).join('+')
   );
 
   // Dragon immunity bounce visual
@@ -143,7 +150,8 @@ import { gameStore, selectCard, cancelCard, useSwap, endTurn } from '../stores/g
     const { type, value } = intent;
     // block is applied at turn start; heal also treated as already resolved per design
     const timing = (type === 'block' || type === 'heal') ? 'Already done' : 'On end turn';
-    if (type === 'attack') return { text: `${INTENT_ICONS.attack} Attack ${value}`, color: INTENT_COLORS.attack, timing };
+    const attackValue = $gameStore.enemy.buffActive ? `${value}×2` : value;
+    if (type === 'attack') return { text: `${INTENT_ICONS.attack} Attack ${attackValue}`, color: INTENT_COLORS.attack, timing };
     if (type === 'block')  return { text: `🛡️ Block ${value}`,                      color: INTENT_COLORS.block,  timing };
     if (type === 'buff')   return { text: `${INTENT_ICONS.buff} Buff`,               color: INTENT_COLORS.buff,   timing };
     if (type === 'heal')   return { text: `${INTENT_ICONS.heal} Heal ${value}`,      color: INTENT_COLORS.heal,   timing };
