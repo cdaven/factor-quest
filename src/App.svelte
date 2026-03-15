@@ -74,11 +74,7 @@
         onmouseenter={(e) => e.currentTarget.style.background = '#5BA3E8'}
         onmouseleave={(e) => e.currentTarget.style.background = '#4A90D9'}
         onclick={resetRun}
-      >Try Again</button>
-      <button
-        class="text-sm text-[#8A9BB5] underline"
-        onclick={() => showMastery = true}
-      >View Mastery Map</button>
+      >Adventure Again</button>
     </div>
   {/if}
 </div>
