@@ -77,3 +77,9 @@ A 10×10 grid (accessible from the main menu) shows progress across all 55 multi
 ## Authorship
 
 This project was built as a collaboration between a human and AI. The game concept, design, specification, and code are approximately 99% the work of [Claude Code](https://claude.ai/code) (Anthropic's AI coding assistant), including the game mechanics, card system, enemy design, spaced-repetition logic, UI, and animations. The human contributor provided direction, feedback, and testing throughout.
+
+## A note on use
+
+This project is released under the MIT License — you're free to use, modify, and share it however you like. That said, I'd ask that you use it in the spirit it was made: as something that helps rather than harms. I'd prefer it not be used in ways that hurt people or contribute to things most of us would consider wrong.
+
+This isn't a legal restriction — just a request from someone who made a little game for kids and hopes it does some good in the world.
