@@ -1,12 +1,78 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import { gameStore, selectCard, cancelCard, useSwap, endTurn } from '../stores/gameStore.js';
+import { gameStore, selectCard, cancelCard, useSwap, endTurn } from '../stores/gameStore.js';
   import { INTENT_COLORS, INTENT_ICONS, AREA_COLORS, areaForFight } from '../lib/ui.js';
   import ProgressBar from './ProgressBar.svelte';
   import PlayerStats from './PlayerStats.svelte';
   import EnemyDisplay from './EnemyDisplay.svelte';
   import Card from './Card.svelte';
   import HintDisplay from './HintDisplay.svelte';
+  import TourOverlay, { type TourStep } from './TourOverlay.svelte';
+
+  const TOUR_STEPS: TourStep[] = [
+    {
+      targetId: 'tour-progress',
+      tooltipSide: 'below',
+      arrowSide: 'top',
+      title: 'Your journey',
+      body: 'Nine fights across three areas — Forest, Caves, and Fortress. The glowing dot shows where you are now. Complete all 9 to reach the dragon!',
+      logLabel: 'progress bar',
+    },
+    {
+      targetId: 'tour-player',
+      tooltipSide: 'right',
+      arrowSide: 'left',
+      title: 'This is you',
+      body: "The Young Wizard — that's you! The green bar is your health (HP). If it hits zero, the run is over. HP carries across all nine fights.",
+      logLabel: 'player character',
+    },
+    {
+      targetId: 'tour-enemy',
+      tooltipSide: 'left',
+      arrowSide: 'right',
+      title: 'Your enemy',
+      body: "The enemy you're fighting right now, with their own health bar. Reduce their HP to zero to win the fight and move on.",
+      logLabel: 'enemy character',
+    },
+    {
+      targetId: 'tour-intent',
+      tooltipSide: 'left',
+      arrowSide: 'right',
+      title: "Enemy's next move",
+      body: "The enemy always shows what it'll do next turn. ⚔️ means it will attack you. Plan your defence before pressing End Turn!",
+      logLabel: 'enemy intent',
+    },
+    {
+      targetId: 'tour-hand',
+      tooltipSide: 'above',
+      arrowSide: 'bottom',
+      title: 'Your cards',
+      body: 'These are your actions. Tap a card to select it — a multiplication problem appears. Answer correctly to play the card!',
+      logLabel: 'hand',
+    },
+    {
+      targetId: 'tour-buttons',
+      tooltipSide: 'above',
+      arrowSide: 'bottom',
+      title: 'End Turn & Attack',
+      body: "When you're done playing cards, press this button. Your attacks land, then the enemy takes its turn. The Swap button lets you trade unwanted cards — once per turn.",
+      logLabel: 'buttons',
+    },
+  ];
+
+  let showTour = $state(false);
+  let _tourChecked = false;
+
+  // Wait until phase is actually 'combat' before showing the tour —
+  // CombatScreen is also mounted during 'prefight' (behind the scene overlay).
+  $effect(() => {
+    if (!_tourChecked && $gameStore.phase === 'combat' && $gameStore.fightNumber === 1) {
+      _tourChecked = true;
+      if (localStorage.getItem('tourComplete') !== 'true') {
+        showTour = true;
+      }
+    }
+  });
 
   // Local swap mode state
   let swapMode = $state(false);
@@ -139,7 +205,7 @@
   {/if}
 
   <!-- Progress bar -->
-  <div class="mt-6" onclick={(e) => e.stopPropagation()}>
+  <div id="tour-progress" class="mt-6" onclick={(e) => e.stopPropagation()}>
     <ProgressBar fightNumber={$gameStore.fightNumber} />
   </div>
 
@@ -154,9 +220,12 @@
   >
     <!-- Player column -->
     <div class="flex flex-col items-center gap-2 flex-1">
-      <PlayerStats player={$gameStore.player} />
-      <div class="text-6xl leading-none select-none mt-2">🧙</div>
-      <div class="text-sm text-[#8A9BB5] font-semibold">You</div>
+      <!-- Tour target: player character (HP bar + emoji + label) -->
+      <div id="tour-player" class="flex flex-col items-center gap-2 w-full">
+        <PlayerStats player={$gameStore.player} />
+        <div class="text-6xl leading-none select-none mt-2">🧙</div>
+        <div class="text-sm text-[#8A9BB5] font-semibold">You</div>
+      </div>
       <!-- Queued actions box -->
       {#if $gameStore.player.pendingAttackTotal > 0 || $gameStore.player.counterActive}
         <div class="action-box w-full" style="border-color: rgba(231,76,60,0.4);">
@@ -178,22 +247,25 @@
 
     <!-- Enemy column -->
     <div class="flex flex-col items-center gap-2 flex-1">
-      <EnemyDisplay enemy={$gameStore.enemy} ghostHp={ghostHp()} />
-      <div
-        class="text-6xl leading-none select-none mt-2 transition-all duration-200"
-        class:buffed={$gameStore.enemy.buffActive}
-        class:bounce-deflect={bouncing}
-      >
-        {$gameStore.enemy.emoji}
+      <!-- Tour target: enemy character (HP bar + emoji + name, not intent) -->
+      <div id="tour-enemy" class="flex flex-col items-center gap-2 w-full">
+        <EnemyDisplay enemy={$gameStore.enemy} ghostHp={ghostHp()} />
+        <div
+          class="text-6xl leading-none select-none mt-2 transition-all duration-200"
+          class:buffed={$gameStore.enemy.buffActive}
+          class:bounce-deflect={bouncing}
+        >
+          {$gameStore.enemy.emoji}
+        </div>
+        {#if bouncing}
+          <div class="text-sm font-bold deflect-label">⚡ Immune!</div>
+        {/if}
+        <div class="text-sm text-[#8A9BB5] font-semibold">{$gameStore.enemy.name}</div>
       </div>
-      {#if bouncing}
-        <div class="text-sm font-bold deflect-label">⚡ Immune!</div>
-      {/if}
-      <div class="text-sm text-[#8A9BB5] font-semibold">{$gameStore.enemy.name}</div>
-      <!-- Enemy intent box -->
+      <!-- Enemy intent box (tour target: step 4) -->
       {#if intentDisplay().text}
         {@const id = intentDisplay()}
-        <div class="action-box w-full" style="border-color: {id.color}55;">
+        <div id="tour-intent" class="action-box w-full" style="border-color: {id.color}55;">
           <div class="action-box-label">{id.timing}</div>
           <span class="text-sm font-bold" style="color: {id.color}">{id.text}</span>
         </div>
@@ -220,7 +292,7 @@
     {/if}
 
     <!-- Cards -->
-    <div class="flex gap-3 justify-center flex-wrap">
+    <div id="tour-hand" class="flex gap-3 justify-center flex-wrap">
       {#each $gameStore.player.hand as card (card.id)}
         <div transition:fly={{ y: 40, duration: 250 }}>
           <Card
@@ -258,7 +330,7 @@
     <HintDisplay />
 
     <!-- Controls -->
-    <div class="flex gap-3 items-center mt-1">
+    <div id="tour-buttons" class="flex gap-3 items-center mt-1">
       {#if swapMode}
         <button
           class="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors duration-150"
@@ -298,6 +370,11 @@
     </div>
      -->
   </div>
+
+  <!-- Guided tour (fight 1, first run only) -->
+  {#if showTour}
+    <TourOverlay steps={TOUR_STEPS} oncomplete={() => { showTour = false; }} />
+  {/if}
 </div>
 
 <style>

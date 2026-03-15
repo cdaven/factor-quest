@@ -4,7 +4,11 @@
   const HINTS_DONE_KEY = 'factorquest_hints_done';
 
   // Whether the player has already seen and completed fight 1 guided hints
-  let guidedDone = $state(localStorage.getItem(HINTS_DONE_KEY) === 'true');
+  // Also suppressed if the guided tour was completed (covers the same ground)
+  let guidedDone = $state(
+    localStorage.getItem(HINTS_DONE_KEY) === 'true' ||
+    localStorage.getItem('fight1HintsComplete') === 'true'
+  );
 
   // Guided hint phase for fight 1 (first run only)
   // Phases: 'tap_card' → 'play_more' → 'end_turn' → 'done'
