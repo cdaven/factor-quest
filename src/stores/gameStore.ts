@@ -4,6 +4,7 @@ import { ENEMY_DEFINITIONS, FIGHT_ORDER, type EnemyIntent } from '../lib/enemies
 import { stampProblem, type CardTierForPool } from '../lib/problems.js';
 import { log, logState } from '../lib/logger.js';
 import { masteryStore } from './masteryStore.js';
+import { onCorrectAnswer, onEnemyDefeated, onDragonDefeated } from './trophyStore.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,10 @@ export interface GameState {
   lastRestHpGained: number;
   runStats: RunStats;
   masterySnapshot: Record<string, number>;
+  // Run-level trophy flags — reset at the start of each new run
+  healPotionUsedThisRun: boolean;  // true once any Heal Potion resolves successfully
+  droppedBelow20HP: boolean;       // true if player hp ever reached ≤ 20 this run
+  hpLostInForest: boolean;         // true if player took any damage in fights 1–3
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -259,6 +264,8 @@ function applyDamageToPlayer(s: GameState, damage: number): void {
   }
   if (dmg > 0) {
     s.player.hp = Math.max(0, s.player.hp - dmg);
+    if (s.player.hp <= 20) s.droppedBelow20HP = true;
+    if (s.fightNumber <= 3) s.hpLostInForest = true;
   }
   logState(s.player, 'Player');
 }
@@ -314,6 +321,7 @@ function resolveCardEffect(s: GameState, card: CardInstance): void {
       const before = s.player.hp;
       s.player.hp = Math.min(s.player.hp + value, s.player.maxHp);
       const gained = s.player.hp - before;
+      s.healPotionUsedThisRun = true;
       log('ACTION', `Card played: ${card.name} (${card.tier}, heal) — player gains ${gained} HP`);
       logState(s.player, 'Player');
       break;
@@ -428,6 +436,9 @@ function createInitialState(): GameState {
     lastRestHpGained: 0,
     runStats: { totalCardsPlayed: 0, totalCorrectAnswers: 0, totalProblemsAttempted: 0, isFlawless: true },
     masterySnapshot: {},
+    healPotionUsedThisRun: false,
+    droppedBelow20HP: false,
+    hpLostInForest: false,
   };
 }
 
@@ -471,6 +482,9 @@ export function startRun(): void {
     s.enemy = enemy;
     s.runStats = { totalCardsPlayed: 0, totalCorrectAnswers: 0, totalProblemsAttempted: 0, isFlawless: true };
     s.masterySnapshot = { ...masteryStore.getScores() };
+    s.healPotionUsedThisRun = false;
+    s.droppedBelow20HP = false;
+    s.hpLostInForest = false;
 
     log('RUN', `Run started — player HP: 60/60, deck: ${deck.length} cards`);
     log('SCENE', `Pre-fight scene: Fight 1 — ${enemy.name} ${enemy.emoji}`);
@@ -542,6 +556,8 @@ export function cancelCard(): void {
  * Handles both first and second attempt logic, mastery scoring, and card effects.
  */
 export function submitAnswer(answer: number): void {
+  let callOnCorrectAnswer = false;
+
   update(s => {
     const card = s.player.hand.find(c => c.id === s.selectedCardId);
     if (!card) return s;
@@ -576,6 +592,7 @@ export function submitAnswer(answer: number): void {
       s.answerFeedback = { correct: true, attempt, submittedAnswer: answer, correctAnswer: prob.answer, cardType: card.type };
       s.runStats.totalCorrectAnswers++;
       s.runStats.totalCardsPlayed++;
+      callOnCorrectAnswer = true;
 
     } else if (attempt === 1) {
       // Wrong first attempt — penalise, re-stamp new problem of same tier
@@ -608,6 +625,9 @@ export function submitAnswer(answer: number): void {
 
     return s;
   });
+
+  // Called outside the update() so masteryStore is already up-to-date
+  if (callOnCorrectAnswer) onCorrectAnswer();
 }
 
 /**
@@ -637,7 +657,34 @@ export function useSwap(cardIds: string[]): void {
 
 /** Delay victory phase by 400ms so the enemy death flash animation plays first. */
 function scheduleVictory(): void {
-  setTimeout(() => update(s => { handleVictory(s); return s; }), 400);
+  setTimeout(() => {
+    // Primitive captures — TypeScript tracks these correctly outside the callback
+    let fightNum  = 0;
+    let turn      = 0;
+    let enemyId   = '';
+    let playerHp  = 0;
+    let healUsed  = false;
+    let dropped   = false;
+    let forestDmg = false;
+
+    update(s => {
+      fightNum  = s.fightNumber;
+      turn      = s.turn;
+      enemyId   = s.enemy.id;
+      playerHp  = s.player.hp;
+      healUsed  = s.healPotionUsedThisRun;
+      dropped   = s.droppedBelow20HP;
+      forestDmg = s.hpLostInForest;
+      handleVictory(s);
+      return s;
+    });
+
+    if (fightNum === 9) {
+      onDragonDefeated(playerHp, healUsed, dropped, turn);
+    } else {
+      onEnemyDefeated(enemyId, fightNum, turn, forestDmg);
+    }
+  }, 400);
 }
 
 /** Delay defeat phase by 400ms so the player death flash animation plays first. */

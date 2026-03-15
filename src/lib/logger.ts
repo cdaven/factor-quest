@@ -1,4 +1,4 @@
-export type LogCategory = 'ACTION' | 'STATE' | 'PROBLEM' | 'SCENE' | 'RUN';
+export type LogCategory = 'ACTION' | 'STATE' | 'PROBLEM' | 'SCENE' | 'RUN' | 'TROPHY' | 'STREAK';
 
 const LOGGING_ENABLED = true;
 

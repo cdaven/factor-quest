@@ -1,24 +1,43 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { gameStore, resetRun } from './stores/gameStore.js';
+  import { initTrophyStore, onSessionLoad } from './stores/trophyStore.js';
   import MainMenu     from './components/MainMenu.svelte';
   import CombatScreen from './components/CombatScreen.svelte';
   import SceneOverlay from './components/SceneOverlay.svelte';
   import MasteryMap   from './components/MasteryMap.svelte';
   import DragonSlain  from './components/DragonSlain.svelte';
   import FinalVictory from './components/FinalVictory.svelte';
+  import TrophyCase   from './components/TrophyCase.svelte';
+  import TrophyToast  from './components/TrophyToast.svelte';
 
-  // Mastery map can be shown as a full-screen overlay at any time from the menu
-  let showMastery = $state(false);
+  // Overlay screens accessible from the main menu
+  let showMastery    = $state(false);
+  let showTrophyCase = $state(false);
 
   let phase = $derived($gameStore.phase);
+
+  onMount(() => {
+    initTrophyStore();
+    onSessionLoad();
+  });
 </script>
 
+<!-- Toast lives at the root so it overlays every screen -->
+<TrophyToast />
+
 <div class="max-w-3xl mx-auto min-h-screen flex flex-col">
-  {#if showMastery}
+  {#if showTrophyCase}
+    <TrophyCase onBack={() => showTrophyCase = false} />
+
+  {:else if showMastery}
     <MasteryMap onclose={() => showMastery = false} />
 
   {:else if phase === 'menu'}
-    <MainMenu onShowMastery={() => showMastery = true} />
+    <MainMenu
+      onShowMastery={() => showMastery = true}
+      onShowTrophyCase={() => showTrophyCase = true}
+    />
 
   {:else if phase === 'prefight'}
     <!-- Combat screen already loaded behind the overlay -->
