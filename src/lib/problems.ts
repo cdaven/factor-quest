@@ -45,17 +45,25 @@ export const TIER_POOLS: Record<CardTierForPool, Problem[]> = {
 
 /**
  * Compute the selection weight for a problem given its mastery score.
- * Lower (or negative) scores → higher weight → appears more often.
+ * Unseen problems (absent from masteryScores) get weight 3 — above well-practised
+ * but not as urgent as struggling problems, so they surface naturally without
+ * crowding out spaced-repetition pressure.
  */
-function weight(score: number): number {
-  return Math.max(1, 5 - score);
+function getWeight(key: string, masteryScores: MasteryScores): number {
+  if (!(key in masteryScores)) return 3; // unseen
+  const score = masteryScores[key];
+  if (score <= -2) return 6;
+  if (score === -1) return 5;
+  if (score === 0)  return 3;
+  if (score === 1)  return 2;
+  return 1;                              // score ≥ 2
 }
 
 /**
  * Weighted random selection from a pool array.
  */
 function pickWeighted(pool: Problem[], masteryScores: MasteryScores): Problem {
-  const weights = pool.map(p => weight(masteryScores[p.key] ?? 0));
+  const weights = pool.map(p => getWeight(p.key, masteryScores));
   const total = weights.reduce((s, w) => s + w, 0);
   let r = Math.random() * total;
   for (let i = 0; i < pool.length; i++) {
